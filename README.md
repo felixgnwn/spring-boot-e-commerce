@@ -1,5 +1,3 @@
-<img width="1085" height="855" alt="image" src="https://github.com/user-attachments/assets/fe9df470-0ad5-4d1f-be1c-1040f27d1566" /># 🛒 E-Commerce Backend API
-
 A RESTful e-commerce backend built with **Spring Boot**, **PostgreSQL**, and **Java 21**. Features user registration, product management, a cart system, and order processing.
 
 ---
