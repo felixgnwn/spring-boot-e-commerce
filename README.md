@@ -1,3 +1,5 @@
+# E-Commerce Backend Project
+
 A RESTful e-commerce backend built with **Spring Boot**, **PostgreSQL**, and **Java 21**. Features user registration, product management, a cart system, and order processing.
 
 ---
