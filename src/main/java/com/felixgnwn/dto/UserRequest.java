@@ -1,0 +1,15 @@
+package com.felixgnwn.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserRequest {
+
+    private String name;
+    private String email;
+    private String password;
+}
