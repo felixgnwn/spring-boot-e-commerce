@@ -29,18 +29,21 @@ src/main/java/com/felixgnwn/
 │   ├── ProductController.java
 │   ├── UserController.java
 │   ├── CartController.java
-│   └── OrderController.java
+│   ├── OrderController.java
+│   └── CouponController.java
 ├── service/
 │   ├── ProductService.java
 │   ├── UserService.java
 │   ├── CartService.java
-│   └── OrderService.java
+│   ├── OrderService.java
+│   └── CouponService.java
 ├── repository/
 │   ├── ProductRepository.java
 │   ├── UserRepository.java
 │   ├── CartRepository.java
 │   ├── CartItemRepository.java
-│   └── OrderRepository.java
+│   ├── OrderRepository.java
+│   └── CouponRepository.java
 ├── entity/
 │   ├── Product.java
 │   ├── User.java
@@ -48,7 +51,8 @@ src/main/java/com/felixgnwn/
 │   ├── CartItem.java
 │   ├── Order.java
 │   ├── OrderItem.java
-│   └── OrderStatus.java
+│   ├── OrderStatus.java
+│   └── Coupon.java
 └── dto/
     ├── ProductRequest.java
     ├── ProductResponse.java
@@ -58,7 +62,9 @@ src/main/java/com/felixgnwn/
     ├── CartItemResponse.java
     ├── CartResponse.java
     ├── OrderItemResponse.java
-    └── OrderResponse.java
+    ├── OrderResponse.java
+    ├── CouponRequest.java
+    └── CouponResponse.java
 ```
 
 ---
@@ -159,6 +165,7 @@ volumes:
 |--------|----------|-------------|
 | `GET` | `/api/cart/{userId}` | Get cart for user |
 | `POST` | `/api/cart/{userId}/add` | Add item to cart |
+| `PATCH` | `/api/cart/{userId}/update` | Update item quantity in cart |
 | `DELETE` | `/api/cart/{userId}/remove/{productId}` | Remove item from cart |
 | `DELETE` | `/api/cart/{userId}/clear` | Clear entire cart |
 
@@ -166,12 +173,43 @@ volumes:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/orders/{userId}/place` | Place order from cart |
-| `GET` | `/api/orders/user/{userId}` | Get all orders for user |
+| `POST` | `/api/orders/{userId}/place` | Place order from cart (optional `couponCode` query param) |
+| `GET` | `/api/orders/user/{userId}` | Get all orders for user (with optional filters) |
 | `GET` | `/api/orders/{orderId}` | Get order by ID |
 | `PATCH` | `/api/orders/{orderId}/status?status=` | Update order status |
+| `POST` | `/api/orders/{orderId}/cancel?userId=` | Cancel order by user |
 
 **Order Status values:** `PENDING` `CONFIRMED` `SHIPPED` `DELIVERED` `CANCELLED`
+
+#### Order filters
+
+`GET /api/orders/user/{userId}` supports optional query parameters:
+
+- `status` — filter by order status  
+- `startDate` — ISO date-time (e.g. `2026-03-01T00:00:00`)  
+- `endDate` — ISO date-time (e.g. `2026-03-31T23:59:59`)
+
+Example:
+
+```text
+GET /api/orders/user/1?status=CONFIRMED&startDate=2026-03-01T00:00:00&endDate=2026-03-31T23:59:59
+```
+
+---
+
+### 🎟️ Coupons
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/coupons` | Create a coupon |
+| `GET` | `/api/coupons` | Get all coupons |
+| `PATCH` | `/api/coupons/{id}/deactivate` | Deactivate a coupon |
+
+To apply a coupon when placing an order:
+
+```text
+POST /api/orders/{userId}/place?couponCode=SUMMER10
+```
 
 ---
 
@@ -179,99 +217,44 @@ volumes:
 
 ### Happy Path Flow
 
-```
-Register User → Create Product → Add to Cart → Place Order → Update Status
-```
-
----
-
-### Step 1 — Register a User
-
-**POST** `http://localhost:8080/api/users/register`
-
-```json
-{
-    "name": "Felix",
-    "email": "felix@example.com",
-    "password": "password123"
-}
+```text
+Register User → Create Product → Add to Cart → View Cart → Place Order → Apply Coupon → Update Status → Cancel Order
 ```
 
-<img width="1082" height="721" alt="image" src="https://github.com/user-attachments/assets/5c5317bb-2b99-4183-938c-cc2a28978850" />
+All requests are made against `http://localhost:8080`.
 
----
+1. **Register User**  
+   `POST /api/users/register`
 
-### Step 2 — Create a Product
+2. **Create Product**  
+   `POST /api/products`
 
-**POST** `http://localhost:8080/api/products`
+3. **Add Item to Cart**  
+   `POST /api/cart/{userId}/add`
 
-```json
-{
-    "name": "Nike Air Max",
-    "description": "Running shoes",
-    "price": 150.00,
-    "stock": 50
-}
-```
+4. **Update Item Quantity in Cart**  
+   `PATCH /api/cart/{userId}/update`
 
-<img width="1086" height="773" alt="image" src="https://github.com/user-attachments/assets/4a71b09e-c0be-4bc5-96cd-ccdcb47fe78a" />
+5. **View Cart**  
+   `GET /api/cart/{userId}`
 
----
+6. **Create Coupon (optional)**  
+   `POST /api/coupons`
 
-### Step 3 — Add Item to Cart
+7. **Place Order (optionally with couponCode)**  
+   `POST /api/orders/{userId}/place?couponCode=SUMMER10`
 
-**POST** `http://localhost:8080/api/cart/1/add`
+8. **View Orders**  
+   `GET /api/orders/user/{userId}`
 
-```json
-{
-    "productId": 1,
-    "quantity": 2
-}
-```
+9. **Filter Orders**  
+   `GET /api/orders/user/{userId}?status=CONFIRMED&startDate=2026-03-01T00:00:00&endDate=2026-03-31T23:59:59`
 
-<img width="1093" height="720" alt="image" src="https://github.com/user-attachments/assets/2a3a8f77-1f60-43e7-9244-bc80792ec7c2" />
+10. **Update Order Status**  
+    `PATCH /api/orders/{orderId}/status?status=CONFIRMED`
 
----
-
-### Step 4 — View Cart
-
-**GET** `http://localhost:8080/api/cart/1`
-
-<img width="1085" height="855" alt="image" src="https://github.com/user-attachments/assets/9eccc294-c579-4223-9e06-7db6ec5a3afc" />
-
----
-
-### Step 5 — Place Order
-
-**POST** `http://localhost:8080/api/orders/1/place`
-
-> No request body needed — reads directly from the user's cart.
-
-<img width="1086" height="890" alt="image" src="https://github.com/user-attachments/assets/3fa79dea-007e-4700-b6e8-7e15c8da8c5d" />
-
----
-
-### Step 6 — View Orders
-
-**GET** `http://localhost:8080/api/orders/user/1`
-
-<img width="1090" height="927" alt="image" src="https://github.com/user-attachments/assets/273e1199-29ee-43cc-bca4-370796570a17" />
-
----
-
-### Step 7 — Update Order Status
-
-**PATCH** `http://localhost:8080/api/orders/1/status?status=CONFIRMED`
-
-<img width="1084" height="898" alt="image" src="https://github.com/user-attachments/assets/f14c292a-49a0-4934-ad96-c37d4eb4fe98" />
-
----
-
-### Step 8 — Get All Products 
-
-**GET** `http://localhost:8080/api/products`
-
-<img width="1085" height="804" alt="image" src="https://github.com/user-attachments/assets/51843fb7-e0c7-4384-ae7f-3ac4c52d9735" />
+11. **Cancel Order (by user)**  
+    `POST /api/orders/{orderId}/cancel?userId={userId}`
 
 ---
 
@@ -290,10 +273,10 @@ Register User → Create Product → Add to Cart → Place Order → Update Stat
 - [ ] Low stock alerts
 
 ### 🛒 Cart & Order Improvements
-- [ ] Update item quantity in cart
-- [ ] Coupon / discount code system
-- [ ] Order cancellation by user
-- [ ] Order history with filters
+- [x] Update item quantity in cart
+- [x] Coupon / discount code system
+- [x] Order cancellation by user
+- [x] Order history with filters
 
 ### 💳 Payment
 - [ ] Payment integration (Stripe / Midtrans)

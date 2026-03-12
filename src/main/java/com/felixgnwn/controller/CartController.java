@@ -25,6 +25,12 @@ public class CartController {
         return ResponseEntity.ok(cartService.addItem(userId, request));
     }
 
+    @PatchMapping("/{userId}/update")
+    public ResponseEntity<CartResponse> updateItemQuantity(@PathVariable Long userId,
+                                                           @RequestBody CartItemRequest request) {
+        return ResponseEntity.ok(cartService.updateItemQuantity(userId, request));
+    }
+
     @DeleteMapping("/{userId}/remove/{productId}")
     public ResponseEntity<CartResponse> removeItem(@PathVariable Long userId,
                                                    @PathVariable Long productId) {

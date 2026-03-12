@@ -36,6 +36,10 @@ public class Order {
     @Column(nullable = false)
     private BigDecimal totalAmount;
 
+    private String couponCode;
+
+    private BigDecimal discountAmount;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

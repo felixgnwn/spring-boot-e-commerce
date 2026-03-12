@@ -47,6 +47,23 @@ public class CartService {
         return toResponse(cartRepository.findById(cart.getId()).orElseThrow());
     }
 
+    public CartResponse updateItemQuantity(Long userId, CartItemRequest request) {
+        Cart cart = getOrCreateCart(userId);
+        CartItem item = cartItemRepository
+                .findByCartIdAndProductId(cart.getId(), request.getProductId())
+                .orElseThrow(() -> new RuntimeException("Item not found in cart"));
+
+        Integer newQuantity = request.getQuantity();
+        if (newQuantity == null || newQuantity <= 0) {
+            cartItemRepository.delete(item);
+        } else {
+            item.setQuantity(newQuantity);
+            cartItemRepository.save(item);
+        }
+
+        return toResponse(cartRepository.findById(cart.getId()).orElseThrow());
+    }
+
     public CartResponse removeItem(Long userId, Long productId) {
         Cart cart = getOrCreateCart(userId);
         CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
